@@ -1,0 +1,10 @@
+Flask==3.0.2
+Flask-MySQLdb==2.0.0
+PyMySQL==1.1.0
+python-dotenv==1.0.1
+Werkzeug==3.0.1
+mysqlclient==2.2.4
+mysql-connector-python==8.3.0
+reportlab==4.0.4
+dbutils==3.0.3
+gunicorn==21.2.0 

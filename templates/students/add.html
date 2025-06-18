@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Add Student{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add New Student</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <div class="row">
+            <!-- Basic Information -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Basic Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="roll_number" class="form-label">Roll Number *</label>
+                            <input type="text" class="form-control" id="roll_number" name="roll_number" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="registration_number" class="form-label">Registration Number *</label>
+                            <input type="text" class="form-control" id="registration_number" name="registration_number" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="joining_year" class="form-label">Joining Year *</label>
+                            <select class="form-control" id="joining_year" name="joining_year" required>
+                                {% set current_year = now.year %}
+                                {% for year in range(current_year-4, current_year+1) %}
+                                    <option value="{{ year }}">{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="admission_type" name="admission_type" value="Lateral">
+                                <label class="form-check-label" for="admission_type">
+                                    Lateral Entry Student
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Department *</label>
+                            <select class="form-control" id="department" name="department" required>
+                                <option value="">Select Department</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Mechanical">Mechanical</option>
+                                <option value="Civil">Civil</option>
+                                <option value="Electrical">Electrical</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Contact Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="mobile_number" class="form-label">Mobile Number</label>
+                            <input type="tel" class="form-control" id="mobile_number" name="mobile_number">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date_of_birth" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="blood_group" class="form-label">Blood Group</label>
+                            <select class="form-control" id="blood_group" name="blood_group">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Parent Information -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Parent Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="father_name" class="form-label">Father's Name</label>
+                            <input type="text" class="form-control" id="father_name" name="father_name">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="father_mobile" class="form-label">Father's Mobile</label>
+                            <input type="tel" class="form-control" id="father_mobile" name="father_mobile">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="mother_name" class="form-label">Mother's Name</label>
+                            <input type="text" class="form-control" id="mother_name" name="mother_name">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="mother_mobile" class="form-label">Mother's Mobile</label>
+                            <input type="tel" class="form-control" id="mother_mobile" name="mother_mobile">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="parent_email" class="form-label">Parent's Email</label>
+                            <input type="email" class="form-control" id="parent_email" name="parent_email">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="parent_occupation" class="form-label">Parent's Occupation</label>
+                            <input type="text" class="form-control" id="parent_occupation" name="parent_occupation">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Documents -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Documents</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="student_photo" class="form-label">Student Photo</label>
+                            <input type="file" class="form-control" id="student_photo" name="student_photo" accept=".jpg,.jpeg,.png">
+                            <div class="form-text">Allowed formats: JPG, JPEG, PNG</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="aadhar_card" class="form-label">Aadhar Card</label>
+                            <input type="file" class="form-control" id="aadhar_card" name="aadhar_card" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="form-text">Allowed formats: PDF, JPG, JPEG, PNG</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="pan_card" class="form-label">PAN Card</label>
+                            <input type="file" class="form-control" id="pan_card" name="pan_card" accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="form-text">Allowed formats: PDF, JPG, JPEG, PNG</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="other_documents" class="form-label">Other Documents</label>
+                            <input type="file" class="form-control" id="other_documents" name="other_documents" multiple accept=".pdf,.jpg,.jpeg,.png">
+                            <div class="form-text">Allowed formats: PDF, JPG, JPEG, PNG</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Add Student</button>
+                <a href="{{ url_for('list_students') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

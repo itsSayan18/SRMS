@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit Teacher</h2>
+        <div>
+            <a href="{{ url_for('list_teachers') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Teachers
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ teacher.username }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Department</label>
+                            <select class="form-control" id="department" name="department" required>
+                                <option value="">Select Department</option>
+                                <option value="Computer Science" {% if teacher.department == 'Computer Science' %}selected{% endif %}>Computer Science</option>
+                                <option value="Information Technology" {% if teacher.department == 'Information Technology' %}selected{% endif %}>Information Technology</option>
+                                <option value="Electronics" {% if teacher.department == 'Electronics' %}selected{% endif %}>Electronics</option>
+                                <option value="Mechanical" {% if teacher.department == 'Mechanical' %}selected{% endif %}>Mechanical</option>
+                                <option value="Civil" {% if teacher.department == 'Civil' %}selected{% endif %}>Civil</option>
+                                <option value="Electrical" {% if teacher.department == 'Electrical' %}selected{% endif %}>Electrical</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password">
+                            <small class="text-muted">Leave blank to keep current password</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Teacher
+                            </button>
+                            <a href="{{ url_for('list_teachers') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info"></i>
+                            Username must be unique
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info"></i>
+                            Department selection is required
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info"></i>
+                            Only fill password field if you want to change it
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %} 

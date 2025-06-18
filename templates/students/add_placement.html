@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Add Placement Details</h2>
+        <a href="{{ url_for('view_student', id=student_id) }}" class="btn btn-secondary">Back to Student</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="company">Company Name</label>
+                            <input type="text" class="form-control" id="company" name="company" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="package">Package (LPA)</label>
+                            <input type="number" step="0.01" class="form-control" id="package" name="package" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="location">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label for="joining_letter">Joining Letter (PDF)</label>
+                            <input type="file" class="form-control" id="joining_letter" name="joining_letter" accept=".pdf">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="salary_slip">Salary Slip (PDF)</label>
+                            <input type="file" class="form-control" id="salary_slip" name="salary_slip" accept=".pdf">
+                        </div>
+                    </div>
+                </div>
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary">Save Placement Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

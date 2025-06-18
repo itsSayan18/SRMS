@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Add Academic Performance - {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Add Academic Performance - {{ student.name }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="semester" class="form-label">Semester *</label>
+                    <select class="form-select" id="semester" name="semester" required>
+                        <option value="">Select Semester</option>
+                        {% for i in range(1, 9) %}
+                        <option value="{{ i }}">Semester {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="cgpa" class="form-label">CGPA *</label>
+                    <input type="number" class="form-control" id="cgpa" name="cgpa" 
+                           step="0.01" min="0" max="10" required>
+                    <div class="form-text">Enter CGPA between 0 and 10</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="sgpa" class="form-label">SGPA *</label>
+                    <input type="number" class="form-control" id="sgpa" name="sgpa" 
+                           step="0.01" min="0" max="10" required>
+                    <div class="form-text">Enter SGPA between 0 and 10</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="backlogs" class="form-label">Number of Backlogs</label>
+                    <input type="number" class="form-control" id="backlogs" name="backlogs" 
+                           min="0" value="0">
+                </div>
+
+                <div class="mb-3">
+                    <label for="marksheet" class="form-label">Upload Marksheet (PDF)</label>
+                    <input type="file" class="form-control" id="marksheet" name="marksheet" 
+                           accept=".pdf">
+                    <div class="form-text">Upload marksheet in PDF format</div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('view_student', id=student.id) }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Result</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(event) {
+        const cgpa = parseFloat(document.getElementById('cgpa').value);
+        const sgpa = parseFloat(document.getElementById('sgpa').value);
+        const backlogs = parseInt(document.getElementById('backlogs').value);
+        
+        if (cgpa < 0 || cgpa > 10) {
+            alert('CGPA must be between 0 and 10');
+            event.preventDefault();
+            return;
+        }
+        
+        if (sgpa < 0 || sgpa > 10) {
+            alert('SGPA must be between 0 and 10');
+            event.preventDefault();
+            return;
+        }
+        
+        if (backlogs < 0) {
+            alert('Number of backlogs cannot be negative');
+            event.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %} 

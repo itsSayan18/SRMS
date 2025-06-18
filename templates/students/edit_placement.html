@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit Placement Details</h2>
+        <div>
+            <a href="{{ url_for('list_placements') }}" class="btn btn-secondary">Back to Placements</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="company" class="form-label">Company</label>
+                    <input type="text" class="form-control" id="company" name="company" value="{{ placement.company }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="package" class="form-label">Package (LPA)</label>
+                    <input type="number" step="0.01" class="form-control" id="package" name="package" value="{{ placement.package }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label">Location</label>
+                    <input type="text" class="form-control" id="location" name="location" value="{{ placement.location }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="joining_letter" class="form-label">Update Joining Letter (PDF only)</label>
+                    <input type="file" class="form-control" id="joining_letter" name="joining_letter" accept=".pdf">
+                    {% if placement.joining_letter_path %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('static', filename=placement.joining_letter_path) }}" target="_blank" class="btn btn-sm btn-info">View Current Joining Letter</a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label for="salary_slip" class="form-label">Update Salary Slip (PDF only)</label>
+                    <input type="file" class="form-control" id="salary_slip" name="salary_slip" accept=".pdf">
+                    {% if placement.salary_slip_path %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('static', filename=placement.salary_slip_path) }}" target="_blank" class="btn btn-sm btn-info">View Current Salary Slip</a>
+                    </div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Update Placement</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

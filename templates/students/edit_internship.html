@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit Internship Details</h2>
+        <div>
+            <a href="{{ url_for('list_internships') }}" class="btn btn-secondary">Back to Internships</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="company" class="form-label">Company</label>
+                    <input type="text" class="form-control" id="company" name="company" value="{{ internship.company }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Duration</label>
+                    <input type="text" class="form-control" id="duration" name="duration" value="{{ internship.duration }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="domain" class="form-label">Domain</label>
+                    <input type="text" class="form-control" id="domain" name="domain" value="{{ internship.domain }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="ongoing" {% if internship.status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                        <option value="completed" {% if internship.status == 'completed' %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="completion_certificate" class="form-label">Update Completion Certificate (PDF only)</label>
+                    <input type="file" class="form-control" id="completion_certificate" name="completion_certificate" accept=".pdf">
+                    {% if internship.completion_certificate_path %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('static', filename=internship.completion_certificate_path) }}" target="_blank" class="btn btn-sm btn-info">View Current Certificate</a>
+                    </div>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Update Internship</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

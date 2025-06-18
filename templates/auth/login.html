@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Login - SRMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center min-vh-100">
+        <div class="col-md-6 col-lg-5">
+            <div class="text-center mb-4">
+                <h2 class="text-primary mb-2">Welcome Back!</h2>
+                <p class="text-muted">Please login to your account</p>
+            </div>
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <form method="POST" action="{{ url_for('login') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="form-floating mb-4">
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+                            <label for="username">
+                                <i class="fas fa-user text-muted me-2"></i>Username
+                            </label>
+                        </div>
+                        
+                        <div class="form-floating mb-4">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                            <label for="password">
+                                <i class="fas fa-lock text-muted me-2"></i>Password
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <p class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Secure Login System
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-floating > .form-control {
+    padding-left: 1rem;
+}
+.form-floating > label {
+    padding-left: 1rem;
+}
+.btn-primary {
+    padding: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.card {
+    border-radius: 1rem;
+}
+.form-control {
+    border-radius: 0.5rem;
+}
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+</style>
+{% endblock %} 

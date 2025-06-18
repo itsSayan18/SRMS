@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Student{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit Student</h2>
+        <a href="{{ url_for('view_student', id=student.id) }}" class="btn btn-secondary">Back to Details</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Basic Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ student.name }}" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="roll_no" class="form-label">Roll No</label>
+                        <input type="text" class="form-control" id="roll_no" name="roll_no" value="{{ student.roll_no }}" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="registration_no" class="form-label">Registration No</label>
+                        <input type="text" class="form-control" id="registration_no" name="registration_no" value="{{ student.registration_no }}" required>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="joining_year" class="form-label">Joining Year</label>
+                        <select class="form-select" id="joining_year" name="joining_year" required>
+                            {% set current_year = now.year %}
+                            {% set min_year = [student.joining_year - 2, current_year - 4] | min %}
+                            {% set max_year = [student.joining_year + 1, current_year + 1] | max %}
+                            {% for year in range(min_year, max_year + 1) %}
+                                <option value="{{ year }}" {% if student.joining_year == year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="admission_type" class="form-label">Admission Type</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="admission_type" name="admission_type" {% if student.is_lateral %}checked{% endif %}>
+                            <label class="form-check-label" for="admission_type">
+                                Lateral Entry
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="department" class="form-label">Department</label>
+                        <select class="form-select" id="department" name="department" required>
+                            <option value="Computer Science" {% if student.department == 'Computer Science' %}selected{% endif %}>Computer Science</option>
+                            <option value="Information Technology" {% if student.department == 'Information Technology' %}selected{% endif %}>Information Technology</option>
+                            <option value="Electronics" {% if student.department == 'Electronics' %}selected{% endif %}>Electronics</option>
+                            <option value="Mechanical" {% if student.department == 'Mechanical' %}selected{% endif %}>Mechanical</option>
+                            <option value="Civil" {% if student.department == 'Civil' %}selected{% endif %}>Civil</option>
+                            <option value="Electrical" {% if student.department == 'Electrical' %}selected{% endif %}>Electrical</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="date_of_birth" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="blood_group" class="form-label">Blood Group</label>
+                        <select class="form-select" id="blood_group" name="blood_group">
+                            <option value="">Select Blood Group</option>
+                            {% for bg in ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] %}
+                                <option value="{{ bg }}" {% if student.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3">{{ student.address }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="mobile_number" class="form-label">Mobile Number</label>
+                        <input type="tel" class="form-control" id="mobile_number" name="mobile_number" value="{{ student.mobile_number }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ student.email }}">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="father_name" class="form-label">Father's Name</label>
+                        <input type="text" class="form-control" id="father_name" name="father_name" value="{{ student.father_name }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="father_mobile" class="form-label">Father's Mobile</label>
+                        <input type="tel" class="form-control" id="father_mobile" name="father_mobile" value="{{ student.father_mobile }}">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="mother_name" class="form-label">Mother's Name</label>
+                        <input type="text" class="form-control" id="mother_name" name="mother_name" value="{{ student.mother_name }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="mother_mobile" class="form-label">Mother's Mobile</label>
+                        <input type="tel" class="form-control" id="mother_mobile" name="mother_mobile" value="{{ student.mother_mobile }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Documents</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="student_photo" class="form-label">Student Photo</label>
+                        {% if student.student_photo_path %}
+                            <div class="mb-2">
+                                <img src="{{ url_for('static', filename=student.student_photo_path) }}" alt="Current photo" class="img-thumbnail" style="max-height: 100px;">
+                            </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="student_photo" name="student_photo" accept=".jpg,.jpeg,.png">
+                        <div class="form-text">Allowed formats: JPG, JPEG, PNG</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="aadhar_card" class="form-label">Aadhar Card</label>
+                        {% if student.aadhar_card_path %}
+                            <div class="mb-2">
+                                <a href="{{ url_for('static', filename=student.aadhar_card_path) }}" target="_blank">View current Aadhar card</a>
+                            </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="aadhar_card" name="aadhar_card" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-text">Allowed formats: PDF, JPG, JPEG, PNG</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="pan_card" class="form-label">PAN Card</label>
+                        {% if student.pan_card_path %}
+                            <div class="mb-2">
+                                <a href="{{ url_for('static', filename=student.pan_card_path) }}" target="_blank">View current PAN card</a>
+                            </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="pan_card" name="pan_card" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-text">Allowed formats: PDF, JPG, JPEG, PNG</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="other_documents" class="form-label">Other Documents</label>
+                        {% if student.other_documents_path %}
+                            <div class="mb-2">
+                                {% for doc in student.other_documents_path.split(',') %}
+                                    <div><a href="{{ url_for('static', filename=doc) }}" target="_blank">View document {{ loop.index }}</a></div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="other_documents" name="other_documents" multiple accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-text">Allowed formats: PDF, JPG, JPEG, PNG</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end mb-4">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+                console.log('Form validation failed')
+            } else {
+                console.log('Form is valid, submitting...')
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// Debug form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    console.log('Form submission triggered')
+    // Log form data
+    const formData = new FormData(this)
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1])
+    }
+})
+</script>
+{% endblock %} 
