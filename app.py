@@ -140,17 +140,23 @@ def check_database_connection():
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 logger.info(f"Created upload folder: {app.config['UPLOAD_FOLDER']}")
 
-# Check database connection before starting
-if not check_database_connection():
-    logger.error("Failed to connect to database on startup")
-    print("Error: Could not connect to database. Please check your configuration.")
-    sys.exit(1)
-logger.info("Database connection test successful")
+# Check database connection before starting (but don't exit if it fails)
+try:
+    if not check_database_connection():
+        logger.warning("Failed to connect to database on startup - will retry on first request")
+    else:
+        logger.info("Database connection test successful")
+except Exception as e:
+    logger.warning(f"Database connection test failed: {str(e)} - will retry on first request")
 
 # Routes
 @app.route('/')
 def index():
     return redirect(url_for('login'))
+
+@app.route('/health')
+def health_check():
+    return jsonify({'status': 'healthy', 'message': 'Student Record Management System is running'}), 200
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
