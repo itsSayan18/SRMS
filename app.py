@@ -1,29 +1,32 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, jsonify
-from flask_mysqldb import MySQL
+import flask_mysqldb
 from functools import wraps
 import os
 import hashlib
 from werkzeug.utils import secure_filename
-from dotenv import load_dotenv
+import dotenv
 import csv
 from io import StringIO, BytesIO
-import MySQLdb
-from dbutils.pooled_db import PooledDB
+# Prefer native MySQLdb; fall back to PyMySQL (pure Python) if unavailable
+try:
+    import MySQLdb  # provided by mysqlclient
+except ImportError:  # e.g., missing native mysqlclient on macOS
+    import pymysql as MySQLdb
+try:
+    import dbutils.pooled_db
+except ImportError:
+    dbutils.pooled_db.PooledDB = None  # Fallback handled below
 import logging
 import traceback
 import secrets
 import sys
 from config import Config
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
+# ReportLab imports are loaded lazily where needed to avoid hard dependency at startup
 from datetime import datetime
 import time
 
 # Load environment variables
-load_dotenv()
+dotenv.load_dotenv()
 
 app = Flask(__name__)
 
@@ -47,19 +50,31 @@ DB_CONFIG = {
     'cursorclass': MySQLdb.cursors.DictCursor
 }
 
-# Create a connection pool
-pool = PooledDB(
-    creator=MySQLdb,
-    maxconnections=10,  # Maximum number of connections
-    mincached=2,        # Minimum number of idle connections in the pool
-    maxcached=5,        # Maximum number of idle connections in the pool
-    maxshared=3,        # Maximum number of shared connections
-    blocking=True,      # Whether to block when no connections are available
-    maxusage=None,      # Maximum number of times to use a connection (None=unlimited)
-    setsession=[],      # List of SQL commands to execute on each new connection
-    ping=1,            # Check connection validity before using it
-    **DB_CONFIG
-)
+class _MinimalPool:
+    def __init__(self, creator, db_kwargs):
+        self._creator = creator
+        self._db_kwargs = db_kwargs
+
+    def connection(self):
+        return self._creator.connect(**self._db_kwargs)
+
+# Create a connection pool (or a minimal fallback if dbutils is missing)
+if dbutils.pooled_db.PooledDB is not None:
+    pool = dbutils.pooled_db.PooledDB(
+        creator=MySQLdb,
+        maxconnections=10,
+        mincached=2,
+        maxcached=5,
+        maxshared=3,
+        blocking=True,
+        maxusage=None,
+        setsession=[],
+        ping=1,
+        **DB_CONFIG
+    )
+else:
+    logger.warning("dbutils not installed; using minimal non-pooled connections as fallback")
+    pool = _MinimalPool(creator=MySQLdb, db_kwargs=DB_CONFIG)
 
 # Upload folder configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
@@ -2176,12 +2191,23 @@ def export_student_pdf(id):
         internships = cur.fetchall()
         
         # Create PDF
+        # Lazy import ReportLab here so the app can start even if reportlab isn't installed
+        try:
+            import reportlab.lib
+            import reportlab.lib.pagesizes
+            import reportlab.platypus
+            import reportlab.lib.styles
+            import reportlab.lib.units
+        except ImportError:
+            flash('PDF feature requires ReportLab. Install with: pip install reportlab', 'error')
+            return redirect(url_for('view_student', id=id))
+
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30)
-        styles = getSampleStyleSheet()
+        doc = reportlab.platypus.SimpleDocTemplate(buffer, pagesize=reportlab.lib.pagesizes.letter, rightMargin=30, leftMargin=30)
+        styles = reportlab.lib.styles.getSampleStyleSheet()
         
         # Custom styles
-        title_style = ParagraphStyle(
+        title_style = reportlab.lib.styles.ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
             fontSize=24,
@@ -2189,15 +2215,15 @@ def export_student_pdf(id):
             alignment=0  # Left alignment
         )
         
-        section_style = ParagraphStyle(
+        section_style = reportlab.lib.styles.ParagraphStyle(
             'SectionTitle',
             parent=styles['Heading2'],
             fontSize=16,
             spaceAfter=12,
-            textColor=colors.HexColor('#2c3e50')
+            textColor=reportlab.lib.colors.HexColor('#2c3e50')
         )
         
-        normal_style = ParagraphStyle(
+        normal_style = reportlab.lib.styles.ParagraphStyle(
             'Normal',
             parent=styles['Normal'],
             fontSize=11,
@@ -2211,8 +2237,8 @@ def export_student_pdf(id):
         
         # Left column content (name and contact info)
         left_column = []
-        left_column.append(Paragraph(f"{student['name']}", title_style))
-        left_column.append(Spacer(1, 10))
+        left_column.append(reportlab.platypus.Paragraph(f"{student['name']}", title_style))
+        left_column.append(reportlab.platypus.Spacer(1, 10))
         
         # Contact Information
         contact_info = []
@@ -2224,7 +2250,7 @@ def export_student_pdf(id):
             contact_info.append(f"📍 {student['address']}")
         
         contact_text = " | ".join(contact_info)
-        left_column.append(Paragraph(contact_text, normal_style))
+        left_column.append(reportlab.platypus.Paragraph(contact_text, normal_style))
         
         # Right column content (photo)
         right_column = []
@@ -2232,21 +2258,21 @@ def export_student_pdf(id):
             try:
                 img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', student['student_photo'])
                 if os.path.exists(img_path):
-                    img = Image(img_path)
-                    img.drawWidth = 1.5 * inch
-                    img.drawHeight = 1.5 * inch
+                    img = reportlab.platypus.Image(img_path)
+                    img.drawWidth = 1.5 * reportlab.lib.units.inch
+                    img.drawHeight = 1.5 * reportlab.lib.units.inch
                     right_column.append(img)
             except Exception as e:
                 app.logger.error(f"Error loading photo: {str(e)}")
                 app.logger.error(traceback.format_exc())
         
         # Create header table
-        header_table = Table([
+        header_table = reportlab.platypus.Table([
             [left_column, right_column]
-        ], colWidths=[4*inch, 2*inch])
+        ], colWidths=[4*reportlab.lib.units.inch, 2*reportlab.lib.units.inch])
         
         # Style header table
-        header_table.setStyle(TableStyle([
+        header_table.setStyle(reportlab.platypus.TableStyle([
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
@@ -2256,12 +2282,12 @@ def export_student_pdf(id):
         ]))
         
         story.append(header_table)
-        story.append(Spacer(1, 20))
+        story.append(reportlab.platypus.Spacer(1, 20))
         
         # Education
-        story.append(Paragraph("EDUCATION", section_style))
-        story.append(Paragraph(f"Bachelor of Technology in {student['department']}", normal_style))
-        story.append(Paragraph(f"Roll Number: {student['roll_no']} | Registration Number: {student['registration_no']}", normal_style))
+        story.append(reportlab.platypus.Paragraph("EDUCATION", section_style))
+        story.append(reportlab.platypus.Paragraph(f"Bachelor of Technology in {student['department']}", normal_style))
+        story.append(reportlab.platypus.Paragraph(f"Roll Number: {student['roll_no']} | Registration Number: {student['registration_no']}", normal_style))
         
         # Calculate current year of study and session
         current_year = datetime.now().year
@@ -2285,14 +2311,14 @@ def export_student_pdf(id):
             # Check passout status for regular students
             passout_status = "Passed Out" if student['current_semester'] >= 8 else f"In Progress (Semester {student['current_semester']}/8)"
         
-        story.append(Paragraph(f"Year: {year_of_study}", normal_style))
-        story.append(Paragraph(f"Session: {student['joining_year']}-{session_end_year}", normal_style))
-        story.append(Paragraph(f"Status: {passout_status}", normal_style))
-        story.append(Spacer(1, 10))
+        story.append(reportlab.platypus.Paragraph(f"Year: {year_of_study}", normal_style))
+        story.append(reportlab.platypus.Paragraph(f"Session: {student['joining_year']}-{session_end_year}", normal_style))
+        story.append(reportlab.platypus.Paragraph(f"Status: {passout_status}", normal_style))
+        story.append(reportlab.platypus.Spacer(1, 10))
         
         # Academic Performance
         if academics:
-            story.append(Paragraph("ACADEMIC PERFORMANCE", section_style))
+            story.append(reportlab.platypus.Paragraph("ACADEMIC PERFORMANCE", section_style))
             academic_data = [['Semester', 'CGPA', 'SGPA', 'Backlogs']]
             for acad in academics:
                 academic_data.append([
@@ -2301,11 +2327,11 @@ def export_student_pdf(id):
                     str(acad['sgpa']),
                     str(acad['backlogs'])
                 ])
-            t = Table(academic_data, colWidths=[1.2*inch]*4)
-            t.setStyle(TableStyle([
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#2c3e50')),
+            t = reportlab.platypus.Table(academic_data, colWidths=[1.2*reportlab.lib.units.inch]*4)
+            t.setStyle(reportlab.platypus.TableStyle([
+                ('GRID', (0, 0), (-1, -1), 1, reportlab.lib.colors.black),
+                ('BACKGROUND', (0, 0), (-1, 0), reportlab.lib.colors.HexColor('#f8f9fa')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), reportlab.lib.colors.HexColor('#2c3e50')),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 12),
@@ -2317,19 +2343,19 @@ def export_student_pdf(id):
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ]))
             story.append(t)
-            story.append(Spacer(1, 20))
+            story.append(reportlab.platypus.Spacer(1, 20))
         
         # Work Experience (Placement)
         if placement:
-            story.append(Paragraph("WORK EXPERIENCE", section_style))
-            story.append(Paragraph(f"Company: {placement['company']}", normal_style))
-            story.append(Paragraph(f"Position: {placement['package']} LPA", normal_style))
-            story.append(Paragraph(f"Location: {placement['location']}", normal_style))
-            story.append(Spacer(1, 10))
+            story.append(reportlab.platypus.Paragraph("WORK EXPERIENCE", section_style))
+            story.append(reportlab.platypus.Paragraph(f"Company: {placement['company']}", normal_style))
+            story.append(reportlab.platypus.Paragraph(f"Position: {placement['package']} LPA", normal_style))
+            story.append(reportlab.platypus.Paragraph(f"Location: {placement['location']}", normal_style))
+            story.append(reportlab.platypus.Spacer(1, 10))
         
         # Internship Experience
         if internships:
-            story.append(Paragraph("INTERNSHIP EXPERIENCE", section_style))
+            story.append(reportlab.platypus.Paragraph("INTERNSHIP EXPERIENCE", section_style))
             internship_data = [['Company', 'Duration', 'Domain', 'Status']]
             for internship in internships:
                 internship_data.append([
@@ -2338,11 +2364,11 @@ def export_student_pdf(id):
                     internship['domain'],
                     internship['status'].upper()
                 ])
-            t = Table(internship_data, colWidths=[1.5*inch]*4)
-            t.setStyle(TableStyle([
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8f9fa')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#2c3e50')),
+            t = reportlab.platypus.Table(internship_data, colWidths=[1.5*reportlab.lib.units.inch]*4)
+            t.setStyle(reportlab.platypus.TableStyle([
+                ('GRID', (0, 0), (-1, -1), 1, reportlab.lib.colors.black),
+                ('BACKGROUND', (0, 0), (-1, 0), reportlab.lib.colors.HexColor('#f8f9fa')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), reportlab.lib.colors.HexColor('#2c3e50')),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 12),
@@ -2353,14 +2379,14 @@ def export_student_pdf(id):
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                 # Add background color for status column based on status
-                ('BACKGROUND', (3, 1), (3, -1), colors.HexColor('#e9ecef')),
-                ('TEXTCOLOR', (3, 1), (3, -1), colors.HexColor('#2c3e50')),
+                ('BACKGROUND', (3, 1), (3, -1), reportlab.lib.colors.HexColor('#e9ecef')),
+                ('TEXTCOLOR', (3, 1), (3, -1), reportlab.lib.colors.HexColor('#2c3e50')),
             ]))
             story.append(t)
-            story.append(Spacer(1, 20))
+            story.append(reportlab.platypus.Spacer(1, 20))
         
         # Personal Information
-        story.append(Paragraph("PERSONAL INFORMATION", section_style))
+        story.append(reportlab.platypus.Paragraph("PERSONAL INFORMATION", section_style))
         personal_info = []
         if student.get('date_of_birth'):
             personal_info.append(f"Date of Birth: {student['date_of_birth']}")
@@ -2368,20 +2394,20 @@ def export_student_pdf(id):
             personal_info.append(f"Blood Group: {student['blood_group']}")
         
         for info in personal_info:
-            story.append(Paragraph(info, normal_style))
+            story.append(reportlab.platypus.Paragraph(info, normal_style))
         
         # Parent Information
         if student.get('father_name') or student.get('mother_name'):
-            story.append(Spacer(1, 10))
-            story.append(Paragraph("PARENT INFORMATION", section_style))
+            story.append(reportlab.platypus.Spacer(1, 10))
+            story.append(reportlab.platypus.Paragraph("PARENT INFORMATION", section_style))
             if student.get('father_name'):
-                story.append(Paragraph(f"Father's Name: {student['father_name']}", normal_style))
+                story.append(reportlab.platypus.Paragraph(f"Father's Name: {student['father_name']}", normal_style))
                 if student.get('father_mobile'):
-                    story.append(Paragraph(f"Father's Contact: {student['father_mobile']}", normal_style))
+                    story.append(reportlab.platypus.Paragraph(f"Father's Contact: {student['father_mobile']}", normal_style))
             if student.get('mother_name'):
-                story.append(Paragraph(f"Mother's Name: {student['mother_name']}", normal_style))
+                story.append(reportlab.platypus.Paragraph(f"Mother's Name: {student['mother_name']}", normal_style))
                 if student.get('mother_mobile'):
-                    story.append(Paragraph(f"Mother's Contact: {student['mother_mobile']}", normal_style))
+                    story.append(reportlab.platypus.Paragraph(f"Mother's Contact: {student['mother_mobile']}", normal_style))
         
         # Build PDF
         doc.build(story)

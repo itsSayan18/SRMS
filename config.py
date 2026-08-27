@@ -9,7 +9,7 @@ class Config:
     # Database configuration
     MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
     MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'sakil8372')
+    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'Itssayan@18')
     MYSQL_DB = os.getenv('MYSQL_DB', 'student_records')
     
     # Upload configuration
